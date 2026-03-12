@@ -18,11 +18,11 @@ def web_search(query: str) -> str:
             search_query=query,
         )
         if response.search_result:
-            return "\n\n".join([d.content for d in response.search_result])
+            return "\n\n".join([d.content for d in response.search_result])  #搜索结果是一个列表，里面有很多结果，将其转成非列表
         return "没有搜索到结果"
     except Exception as e:
         print(e)
-        return f"Error:{e}"
+        return f"没有搜索到结果"
 
 # 第二种写法
 # class SearchArgs(BaseModel):
