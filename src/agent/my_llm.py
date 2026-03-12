@@ -5,6 +5,7 @@ from zai import ZhipuAiClient
 
 load_dotenv()
 
+# DeepSeek官方 api
 deepseek_reasoner = init_chat_model(
     model = "deepseek-reasoner",
     model_provider="deepseek",
@@ -19,4 +20,7 @@ deepseek_chat = init_chat_model(
     base_url = os.getenv("DEEPSEEK_BASE_URL")
 )
 
-zhipuai_client = ZhipuAiClient(api_key=os.getenv("ZHIPU_API_KEY"))
+# 智谱官方 api
+zhipuai_client = ZhipuAiClient(
+    api_key = os.getenv("ZHIPU_API_KEY")
+)
