@@ -1,8 +1,7 @@
 # 一个写项目常用的数据库工具类，不是智能体的工具
 import json
-import os
 from typing import List, Optional
-from dotenv import load_dotenv
+
 
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -159,36 +158,70 @@ class MySQLDatabaseManager:
             log.exception(e)
             raise ValueError(f"执行查询失败： {str(e)}")
         
-    def validate_query(self, query: str) -> bool:
-        """验证SQL查询的合法性，确保它是一个安全的SELECT查询
+    # def validate_query(self, query: str) -> bool:
+    #     """验证SQL查询的合法性，确保它是一个安全的SELECT查询
         
+    #     Args:
+    #         query: 要验证的SQL查询语句。
+    #     """
+    #     # 基本语法检查
+    #     if not query or not query.strip():
+    #         return "错误：查询不能为空"
+        
+    #     # 检查是否以SELECT或WITH开头
+    #     query_lower = query.lower().strip()
+    #     if not query_lower.startswith(('select', 'with')):
+    #         return "错误：查询必须以SELECT或WITH开头"
+        
+    #     # 尝试解析查询（不实际执行）
+    #     try:
+    #         with self.engine.connect() as connection:
+    #             # 使用 SQLAlchemy 的 text() 函数来解析查询语句，EXPLAIN 语句可以检查查询的语法和安全性，而不执行查询
+    #             parsed_query = text(query)
+    #             # 尝试编译查询以检查语法
+    #             compiled = parsed_query.compile(compile_kwargs={"literal_binds": True})
+    #             return "查询语法看起来正确"
+    #     except Exception as e:
+    #         log.exception(e)
+    #         return f"查询语法错误或不安全： {str(e)}"
+
+    def validate_query(self, query: str) -> str:
+        """
+        验证SQL查询的合法性，确保它是一个安全的SELECT查询
+
         Args:
             query: 要验证的SQL查询语句。
         """
-        # 基本语法检查
         if not query or not query.strip():
             return "错误：查询不能为空"
-        
-        # 检查是否以SELECT或WITH开头
+    
         query_lower = query.lower().strip()
         if not query_lower.startswith(('select', 'with')):
-            return "错误：查询必须以SELECT或WITH开头"
-        
-        # 尝试解析查询（不实际执行）
+            return "错误：查询必须以SELECT或WITH开头，其他操作可能被限制"
+
         try:
             with self.engine.connect() as connection:
-                # 使用 SQLAlchemy 的 text() 函数来解析查询语句，EXPLAIN 语句可以检查查询的语法和安全性，而不执行查询
-                parsed_query = text(query)
-                # 尝试编译查询以检查语法
-                compiled = parsed_query.compile(compile_kwargs={"literal_binds": True})
-                return "查询语法看起来正确"
+                # 根据数据库方言构建 explain 查询
+                # 这里以 mysql 为例，其他数据库请参考其 explain 语法进行调整
+                if self.engine.dialect.name == 'mysql':
+                    explain_query = text(f"EXPLAIN {query}")
+                else:
+                    # 对于其他数据库，可能需要不同的 explain 语法，这里只是一个示例
+                    explain_query = text(f"EXPLAIN {query}")
+            
+                # 执行 explain 查询来验证语法和安全性
+                connection.execute(explain_query)
+                return "SQL 查询语法正确，已通过数据库 EXPLAIN 验证" 
+
         except Exception as e:
             log.exception(e)
             return f"查询语法错误或不安全： {str(e)}"
-        
+     
 if __name__ == '__main__':
-    # 配置数据库连接信息
+    import os
+    from dotenv import load_dotenv
     load_dotenv()
+    # 配置数据库连接信息
     password = os.getenv("DB_PASSWORD", "")  # 从环境变量中获取数据库密码，默认为空字符串
     username = "root"
     host = "localhost"
